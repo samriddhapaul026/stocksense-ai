@@ -1,0 +1,14 @@
+langchain
+langchain-community
+langchain-core
+langchain-groq
+langchain-huggingface
+faiss-cpu
+fastapi
+uvicorn
+python-dotenv
+requests
+beautifulsoup4
+lxml
+sentence-transformers
+groq
