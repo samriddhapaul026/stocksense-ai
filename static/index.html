@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StockSense AI</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #0f3460, #1a1a2e);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            width: 100%;
+            max-width: 700px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            font-size: 2rem;
+            color: #0f3460;
+            margin-bottom: 8px;
+        }
+        .header p {
+            color: #888;
+            font-size: 0.95rem;
+        }
+        .badge {
+            display: inline-block;
+            background: #e94560;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            margin-bottom: 10px;
+        }
+        .input-area {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        input {
+            flex: 1;
+            padding: 14px 18px;
+            border: 2px solid #e0e0e0;
+            border-radius: 12px;
+            font-size: 1rem;
+            outline: none;
+            transition: border 0.3s;
+        }
+        input:focus { border-color: #0f3460; }
+        button {
+            padding: 14px 24px;
+            background: #0f3460;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            white-space: nowrap;
+        }
+        button:hover { background: #e94560; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+        .suggestions {
+            margin-bottom: 20px;
+        }
+        .suggestions p {
+            font-size: 0.85rem;
+            color: #888;
+            margin-bottom: 8px;
+        }
+        .chips {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .chip {
+            padding: 6px 14px;
+            background: #f0f4ff;
+            color: #0f3460;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            cursor: pointer;
+            border: 1px solid #d0d8ff;
+            transition: all 0.2s;
+        }
+        .chip:hover {
+            background: #0f3460;
+            color: white;
+        }
+        .answer-box {
+            display: none;
+            background: #f8f9ff;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 10px;
+        }
+        .answer-box.show { display: block; }
+        .answer-label {
+            font-size: 0.8rem;
+            color: #e94560;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        .answer-text {
+            color: #1a1a2e;
+            font-size: 1rem;
+            line-height: 1.7;
+            margin-bottom: 16px;
+        }
+        .sources-label {
+            font-size: 0.8rem;
+            color: #888;
+            font-weight: bold;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+        .source-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 6px 0;
+            font-size: 0.88rem;
+            color: #0f3460;
+        }
+        .source-item::before {
+            content: '📰';
+        }
+        .grounded-badge {
+            display: inline-block;
+            background: #d4edda;
+            color: #155724;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            margin-top: 12px;
+        }
+        .loading {
+            text-align: center;
+            color: #888;
+            padding: 20px;
+            display: none;
+        }
+        .loading.show { display: block; }
+        .spinner {
+            width: 30px;
+            height: 30px;
+            border: 3px solid #f0f0f0;
+            border-top: 3px solid #0f3460;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .footer {
+            text-align: center;
+            margin-top: 24px;
+            font-size: 0.8rem;
+            color: #bbb;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <span class="badge">⚡ Powered by Agentic RAG</span>
+            <h1>📈 StockSense AI</h1>
+            <p>Ask any financial question — get cited, hallucination-free answers</p>
+        </div>
+
+        <div class="suggestions">
+            <p>Try asking:</p>
+            <div class="chips">
+                <span class="chip" onclick="askQuestion('What is happening with Nvidia?')">Nvidia chips</span>
+                <span class="chip" onclick="askQuestion('Tell me about Apple earnings')">Apple earnings</span>
+                <span class="chip" onclick="askQuestion('What did Tesla report?')">Tesla deliveries</span>
+                <span class="chip" onclick="askQuestion('What is the Sensex doing?')">Indian markets</span>
+                <span class="chip" onclick="askQuestion('What is Microsoft Azure doing?')">Microsoft Azure</span>
+                <span class="chip" onclick="askQuestion('What did the Federal Reserve decide?')">Federal Reserve</span>
+            </div>
+        </div>
+
+        <div class="input-area">
+            <input type="text" id="questionInput" 
+                placeholder="Ask a financial question..." 
+                onkeypress="if(event.key==='Enter') askQuestion()"/>
+            <button onclick="askQuestion()" id="askBtn">Ask AI 🚀</button>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>Searching financial data...</p>
+        </div>
+
+        <div class="answer-box" id="answerBox">
+            <div class="answer-label">💬 Answer</div>
+            <div class="answer-text" id="answerText"></div>
+            <div class="sources-label">📚 Sources</div>
+            <div id="sourcesList"></div>
+            <span class="grounded-badge">✅ Grounded — No Hallucination</span>
+        </div>
+
+        <div class="footer">
+            Built with LangChain · Groq · FAISS · FastAPI &nbsp;|&nbsp;
+            <a href="/docs" style="color:#0f3460">API Docs</a>
+        </div>
+    </div>
+
+    <script>
+        async function askQuestion(preset) {
+            const input = document.getElementById('questionInput');
+            const question = preset || input.value.trim();
+            if (!question) return;
+
+            if (preset) input.value = preset;
+
+            document.getElementById('askBtn').disabled = true;
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('answerBox').classList.remove('show');
+
+            try {
+                const response = await fetch('/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ question })
+                });
+                const data = await response.json();
+
+                document.getElementById('answerText').textContent = data.answer;
+
+                const sourcesList = document.getElementById('sourcesList');
+                sourcesList.innerHTML = '';
+                data.sources.forEach(source => {
+                    const div = document.createElement('div');
+                    div.className = 'source-item';
+                    div.textContent = source;
+                    sourcesList.appendChild(div);
+                });
+
+                document.getElementById('answerBox').classList.add('show');
+            } catch (err) {
+                document.getElementById('answerText').textContent = 'Error connecting to AI. Please try again.';
+                document.getElementById('answerBox').classList.add('show');
+            }
+
+            document.getElementById('loading').classList.remove('show');
+            document.getElementById('askBtn').disabled = false;
+        }
+    </script>
+</body>
+</html>
